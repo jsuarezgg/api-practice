@@ -1,0 +1,19 @@
+version: "3.1"
+services:
+  api:
+      image: api-practice
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - "5000:5000"
+      restart: "unless-stopped"
+      env_file:
+        - .env.compose
+      networks:
+        - "api-practice"
+      volumes:
+      - .:/app
+
+networks:
+  api-practice:

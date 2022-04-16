@@ -1,0 +1,4 @@
+uwsgi==2.0.18
+Flask==2.0.2
+setuptools
+flasgger==0.9.5
