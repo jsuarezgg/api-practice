@@ -1,3 +1,4 @@
+"""App module."""
 from flask import Flask
 from flasgger import Swagger
 
@@ -11,6 +12,7 @@ def create_app() -> Flask:
     def health():
         """
         Health check.
+
         ---
         tags:
             - Health check
