@@ -1,0 +1,10 @@
+FROM python:3.8
+
+COPY requirements-docs.txt .
+
+RUN pip install -r requirements-docs.txt
+
+WORKDIR /gen-docs
+COPY gen-docs.py /gen-docs
+
+CMD ["python", "gen-docs.py"]

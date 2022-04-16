@@ -1,0 +1,33 @@
+version: "3.1"
+services:
+  api:
+      image: api-practice
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - "5000:5000"
+      restart: "unless-stopped"
+      env_file:
+        - .env.compose
+      networks:
+        - "api-practice"
+      volumes:
+      - .:/app
+  gen-docs:
+    image: api-practice-flask-gen-docs
+    build:
+      context: dev-tools/gen-docs/
+      dockerfile: Dockerfile.docs
+    environment:
+      DOCS_PATH: ${DOCS_PATH}
+      FILE_NAME_N_EXT: ${FILE_NAME_N_EXT}
+    restart: "no"
+    network_mode: host
+    depends_on:
+      - api
+    volumes:
+      - ./docs/:/gen-docs/docs
+
+networks:
+  api-practice:

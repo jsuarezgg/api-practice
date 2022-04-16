@@ -1,0 +1,26 @@
+{
+    "definitions": {},
+    "info": {
+        "description": "powered by Flasgger",
+        "termsOfService": "/tos",
+        "title": "A swagger API",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "/status": {
+            "get": {
+                "description": "<br/>",
+                "responses": {
+                    "200": {
+                        "description": "Everything OK!"
+                    }
+                },
+                "summary": "Health check.",
+                "tags": [
+                    "Health check"
+                ]
+            }
+        }
+    },
+    "swagger": "2.0"
+}
