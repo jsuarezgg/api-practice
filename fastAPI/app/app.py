@@ -3,6 +3,7 @@ from fastapi import FastAPI
 
 
 def create_app():
+    """Initialize of base app."""
     app = FastAPI(title="api-practice-fastapi")
 
     @app.get("/status")
