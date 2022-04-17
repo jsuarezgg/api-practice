@@ -1,0 +1,18 @@
+version: "3.1"
+services:
+  api:
+      image: api-practice
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - "5000:5000"
+      restart: "unless-stopped"
+      networks:
+        - "api-practice"
+      volumes:
+      - .:/app
+      command: /env/bin/uvicorn --host 0.0.0.0 --port 5000 asgi:app --reload
+
+networks:
+  api-practice:
