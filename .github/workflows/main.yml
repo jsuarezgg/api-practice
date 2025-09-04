@@ -7,7 +7,6 @@ on:
       - main
 
 permissions:                     # Extra scopes for writing to the repo
-  contents: read
   contents: write
   pull-requests: write
   models: read
