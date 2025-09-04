@@ -65,18 +65,21 @@ jobs:
           # docs.md has already been updated directly by the previous step
           git config user.name "docs-bot"
           git config user.email "docs-bot@users.noreply.github.com"
-          
-          # Check if there are any changes
+
+          # Remove temporary artifacts before diffing / committing
+          rm -f diff.patch payload.json response.json || true
+
+          # Check if docs.md actually changed
           if git diff --quiet docs.md; then
             echo "No changes to docs.md, skipping PR creation"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          
+
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          git switch -c docs/update-${{ github.run_id }}
+          # Leave the change uncommitted; the create-pull-request action will create
+          # the branch, commit, and push. Just stage the file so it's picked up.
           git add docs.md
-          git commit -m "docs: automated update via LLM"
 
       # 4️⃣ Create or update a PR
       - name: Create pull request
@@ -86,6 +89,8 @@ jobs:
         with:
           commit-message: "docs: automated update via LLM"
           title: "docs: AI-generated update"
+          add-paths: |
+            docs.md
           body: |
             This PR was generated automatically from changes in ${{ github.ref }}.
             Please review before merging.
