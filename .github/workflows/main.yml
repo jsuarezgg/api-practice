@@ -1,9 +1,13 @@
 name: AI Docs Update
 
 on:
-  # Run automatically on every push to feature branches
-  push:
+  # Run on PRs to main and on pushes to non-main branches
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
+      - main
+  push:
+    branches-ignore:
       - main
 
 permissions:                     # Extra scopes for writing to the repo
@@ -19,17 +23,30 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
-      # 1️⃣ Create a unified diff against main
+      # 1️⃣ Create a unified diff between base and head
       - name: Generate diff
         id: diff
         run: |
           git fetch origin main
-          git diff --unified=0 origin/main...HEAD > diff.patch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="origin/main"
+            HEAD_SHA="HEAD"
+          fi
+          git diff --unified=0 "$BASE_SHA"..."$HEAD_SHA" > diff.patch
           echo "diff_path=diff.patch" >> "$GITHUB_OUTPUT"
+          if [ -s diff.patch ]; then
+            echo "empty_diff=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "empty_diff=true" >> "$GITHUB_OUTPUT"
+          fi
 
       # 2️⃣ Call the model with the diff as context
       - name: Ask model to update docs
         id: ai
+        if: steps.diff.outputs.empty_diff == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DIFF: ${{ steps.diff.outputs.diff_path }}
