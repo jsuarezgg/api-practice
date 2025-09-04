@@ -90,6 +90,7 @@ jobs:
             This PR was generated automatically from changes in ${{ github.ref }}.
             Please review before merging.
           branch: docs/update-${{ github.run_id }}
+          base: main
           draft: false   # you can set to true if you want it as a draft
 
   # 5️⃣ Optional: block until a reviewer OKs 
