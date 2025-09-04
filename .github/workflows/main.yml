@@ -43,10 +43,20 @@ jobs:
 
       # 3️⃣ Apply the model's edits to docs.md
       - name: Apply changes from model
+        id: changes
         run: |
           # docs.md has already been updated directly by the previous step
           git config user.name "docs-bot"
           git config user.email "docs-bot@users.noreply.github.com"
+          
+          # Check if there are any changes
+          if git diff --quiet docs.md; then
+            echo "No changes to docs.md, skipping PR creation"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
           git switch -c docs/update-${{ github.run_id }}
           git add docs.md
           git commit -m "docs: automated update via LLM"
@@ -54,6 +64,7 @@ jobs:
       # 4️⃣ Create or update a PR
       - name: Create pull request
         id: cpr
+        if: steps.changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           commit-message: "docs: automated update via LLM"
