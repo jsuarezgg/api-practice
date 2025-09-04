@@ -47,8 +47,8 @@ jobs:
           DIFF_CONTENT="$(cat "$DIFF")"
           jq -n --arg diff "$DIFF_CONTENT" '{
             messages: [
-              {role:"system", content:"You are an expert technical writer. Update repository documentation precisely and succinctly based only on the provided diff."},
-              {role:"user", content:("Update the repository's docs.md to reflect the following code diff.\n\n" + $diff + "\n\nReturn ONLY the full, updated docs.md file content. Do not include code fences, code blocks, or any commentary.")}
+              {role:"system", content:"You are an expert technical writer. Update repository documentation precisely and succinctly based on the provided diff only."},
+              {role:"user", content:("Update the repository docs.md to reflect the following code diff.\n\n" + $diff + "\n\nReturn ONLY the full, updated docs.md file content. Do not include code fences, code blocks, or any commentary.")}
             ],
             model: "openai/gpt-4o"
           }' > payload.json
