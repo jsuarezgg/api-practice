@@ -41,25 +41,17 @@ jobs:
                -d "$BODY" > response.json
           jq -r '.choices[0].message.content' response.json > docs.md
 
-      # 3️⃣ Apply the model's edits to docs.md
-      - name: Apply changes from model
+      # 3️⃣ Detect whether docs.md changed
+      - name: Detect changes
         id: changes
         run: |
-          # docs.md has already been updated directly by the previous step
-          git config user.name "docs-bot"
-          git config user.email "docs-bot@users.noreply.github.com"
-          
-          # Check if there are any changes
-          if git diff --quiet docs.md; then
-            echo "No changes to docs.md, skipping PR creation"
+          if git diff --quiet -- docs.md; then
+            echo "No changes to docs.md"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          else
+            echo "Changes detected in docs.md"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
           fi
-          
-          echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          git switch -c docs/update-${{ github.run_id }}
-          git add docs.md
-          git commit -m "docs: automated update via LLM"
 
       # 4️⃣ Create or update a PR
       - name: Create pull request
@@ -72,7 +64,10 @@ jobs:
           body: |
             This PR was generated automatically from changes in ${{ github.ref }}.
             Please review before merging.
+          add-paths: |
+            docs.md
           branch: docs/update-${{ github.run_id }}
+          base: main
           draft: false   # you can set to true if you want it as a draft
 
   # 5️⃣ Optional: block until a reviewer OKs 
