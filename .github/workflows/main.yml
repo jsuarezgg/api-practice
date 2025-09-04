@@ -57,7 +57,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: docs: automated update via LLM
+          commit-message: "docs: automated update via LLM"
           title: "docs: AI-generated update"
           body: |
             This PR was generated automatically from changes in ${{ github.ref }}.
@@ -65,7 +65,7 @@ jobs:
           branch: docs/update-${{ github.run_id }}
           draft: false   # you can set to true if you want it as a draft
 
-  # 5️⃣ Optional: block until a reviewer OKs it
+  # 5️⃣ Optional: block until a reviewer OKs 
   require-approval:
     needs: generate-docs
     runs-on: ubuntu-latest
