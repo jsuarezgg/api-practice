@@ -44,6 +44,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DIFF: ${{ steps.diff.outputs.diff_path }}
         run: |
+          set -euo pipefail
+          echo "Diff size: $(wc -c <"$DIFF") bytes"
+
           DIFF_CONTENT="$(cat "$DIFF")"
           jq -n --arg diff "$DIFF_CONTENT" '{
             messages: [
@@ -52,10 +55,14 @@ jobs:
             ],
             model: "openai/gpt-4o"
           }' > payload.json
-          curl -s https://models.github.ai/inference/chat/completions \
+
+          echo "Calling model API..."
+          time curl --fail --no-progress-meter --max-time 120 \
                -H "Authorization: Bearer $GITHUB_TOKEN" \
                -H "Content-Type: application/json" \
-               -d @payload.json > response.json
+               -d @payload.json \
+               https://models.github.ai/inference/chat/completions > response.json
+
           jq -r '.choices[0].message.content' response.json > docs.md
 
       # 3️⃣ Apply the model's edits to docs.md
