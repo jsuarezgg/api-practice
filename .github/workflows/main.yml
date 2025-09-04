@@ -1,28 +1,74 @@
-name: Use GitHub Models
+name: AI Docs Update
 
 on:
-  workflow_dispatch:
+  # Run automatically on every push to feature branches
+  push:
+    branches:
+      - main
 
-permissions:
+permissions:                     # Extra scopes for writing to the repo
+  contents: read
+  contents: write
+  pull-requests: write
   models: read
 
 jobs:
-  call-model:
+  generate-docs:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Call AI model
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      # 1️⃣ Create a unified diff against main
+      - name: Generate diff
+        id: diff
+        run: |
+          git fetch origin main
+          git diff --unified=0 origin/main...HEAD > diff.patch
+          echo "diff_path=diff.patch" >> "$GITHUB_OUTPUT"
+
+      # 2️⃣ Call the model with the diff as context
+      - name: Ask model to update docs
+        id: ai
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIFF: ${{ steps.diff.outputs.diff_path }}
         run: |
-          curl "https://models.github.ai/inference/chat/completions" \
-             -H "Content-Type: application/json" \
-             -H "Authorization: Bearer $GITHUB_TOKEN" \
-             -d '{
-              "messages": [
-                  {
-                     "role": "user",
-                     "content": "Explain the concept of recursion."
-                  }
-               ],
-               "model": "openai/gpt-4o"
-            }'
+          BODY=$(jq -Rs '{messages:[{role:"system",content:"You are an expert technical writer."},{role:"user",content:"Update the documentation in docs.md to reflect this diff:\n\n'"$(cat "$DIFF")"'\n\nReturn the updated content for docs.md file only."}], model:"openai/gpt-4o"}' "$DIFF")
+          curl -s https://models.github.ai/inference/chat/completions \
+               -H "Authorization: Bearer $GITHUB_TOKEN" \
+               -H "Content-Type: application/json" \
+               -d "$BODY" > response.json
+          jq -r '.choices[0].message.content' response.json > docs.md
+
+      # 3️⃣ Apply the model's edits to docs.md
+      - name: Apply changes from model
+        run: |
+          # docs.md has already been updated directly by the previous step
+          git config user.name "docs-bot"
+          git config user.email "docs-bot@users.noreply.github.com"
+          git switch -c docs/update-${{ github.run_id }}
+          git add docs.md
+          git commit -m "docs: automated update via LLM"
+
+      # 4️⃣ Create or update a PR
+      - name: Create pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: docs: automated update via LLM
+          title: "docs: AI-generated update"
+          body: |
+            This PR was generated automatically from changes in ${{ github.ref }}.
+            Please review before merging.
+          branch: docs/update-${{ github.run_id }}
+          draft: false   # you can set to true if you want it as a draft
+
+  # 5️⃣ Optional: block until a reviewer OKs it
+  require-approval:
+    needs: generate-docs
+    runs-on: ubuntu-latest
+    environment: docs-review          # <- configure this env with *Required reviewers*
+    steps:
+      - run: echo "Docs were generated; waiting for approval to proceed."
